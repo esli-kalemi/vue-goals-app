@@ -449,3 +449,52 @@ body.dark-mode .stat-card strong {
   padding: 8px;
   font: inherit;
 }
+
+.user-account {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 90%;
+    margin: 0 auto 25px;
+    padding: 12px 0;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.user-email {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    color: white;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.user-email::before {
+    content: "👤";
+    font-size: 18px;
+}
+
+.user-account button {
+    padding: 8px 18px;
+
+    background-color: #ff0077;
+    color: white;
+
+    border: none;
+    border-radius: 20px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.user-account button:hover {
+    transform: translateY(-2px);
+    background-color: #e6006c;
+}

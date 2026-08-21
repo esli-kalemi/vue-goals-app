@@ -15,7 +15,81 @@
   <body>
     
   <section id="user-goals">
+    <div  v-if="!isLoggedIn" class="register-form">
+      <h2>Create an account</h2>
+
+      <form @submit.prevent="register">
+        <div>
+          <label for="register-email">Email</label>
+          <input
+            id="register-email"
+            type="email"
+            v-model="registerEmail"
+            placeholder="Enter your email"
+          />
+        </div>
+
+        <div>
+          <label for="register-password">Password</label>
+          <input
+            id="register-password"
+            type="password"
+            v-model="registerPassword"
+            placeholder="Enter your password"
+          />
+        </div>
+
+        <p v-if="registerError" class="error-message">
+          {{ registerError }}
+        </p>
+
+        <button type="submit" :disabled="isRegistering">
+          {{ isRegistering ? 'Registering...' : 'Register' }}
+        </button>
+      </form>
+    </div>
+    <div  v-if="!isLoggedIn" class="login-form">
+      <h2>Login</h2>
+
+      <form @submit.prevent="login">
+        <div>
+          <label for="login-email">Email</label>
+          <input
+            id="login-email"
+            type="email"
+            v-model="loginEmail"
+            placeholder="Enter your email"
+          />
+        </div>
+
+        <div>
+          <label for="login-password">Password</label>
+          <input
+            id="login-password"
+            type="password"
+            v-model="loginPassword"
+            placeholder="Enter your password"
+          />
+        </div>
+
+        <p v-if="loginError" class="error-message">
+          {{ loginError }}
+        </p>
+
+        <button type="submit" :disabled="isLoggingIn">
+          {{ isLoggingIn ? 'Logging in...' : 'Login' }}
+        </button>
+      </form>
+    </div>
+    <div v-if="isLoggedIn">
     <header>
+      <div class="user-account">
+        <span>{{ currentUserEmail }}</span>
+
+        <button @click="logout">
+          Logout
+        </button>
+      </div>
       <button class="theme-button" @click="toggleDarkMode">
       {{ darkMode ? '☀️ Light Mode' : '🌙 Dark Mode' }}
     </button>
@@ -220,7 +294,7 @@
       >
         {{ isDeletingGoals ? 'Deleting...' : 'Delete Selected' }}
       </button>
-      
+
       <div v-if="completedGoals.length === 0" class="empty-state">
         <h3>No completed goals yet</h3>
         <p>Finish a goal and it will appear here.</p>
@@ -251,6 +325,7 @@
         </li>
       </ul>
     </div>
+</div>
   </section>
   </body>
 </html>

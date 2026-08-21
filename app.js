@@ -1,22 +1,37 @@
+const API_URL = 'http://localhost:3000';
+
 const app = Vue.createApp({
   data() {
     return {
-     enteredGoalValue:'',
-     enteredDuration:'',
-     enteredPriority:'medium',
-     goals: [],
-     completedGoals: [],
-     editingIndex:null,
-     selectedPriority:'all',
-     currentSection:'goals',
-     errorMessage:'',
-     editErrorMessage: '',
-     darkMode:false,
-     isAddingGoal: false,
-     isSavingGoal: false,
-     isCompletingGoal: false,
-     isDeletingGoals:false,
-    };
+      registerEmail: '',
+      registerPassword: '',
+      registerError: '',
+      isRegistering: false,
+
+      loginEmail: '',
+      loginPassword: '',
+      loginError: '',
+      isLoggingIn: false,
+
+      isLoggedIn: !!localStorage.getItem('token'),
+      currentUserEmail: localStorage.getItem('userEmail') || '',
+
+      enteredGoalValue:'',
+      enteredDuration:'',
+      enteredPriority:'medium',
+      goals: [],
+      completedGoals: [],
+      editingIndex:null,
+      selectedPriority:'all',
+      currentSection:'goals',
+      errorMessage:'',
+      editErrorMessage: '',
+      darkMode:false,
+      isAddingGoal: false,
+      isSavingGoal: false,
+      isCompletingGoal: false,
+      isDeletingGoals:false,
+      };
   },
   computed: {
     totalGoals() {
@@ -46,14 +61,111 @@ const app = Vue.createApp({
       }
     },
 
-  mounted() {
-      this.fetchGoals();
-    },
+ mounted() {
+  if (this.isLoggedIn) {
+    this.fetchGoals();
+  }
+},
 
   methods:{
+    logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userEmail');
+
+      this.isLoggedIn = false;
+      this.currentUserEmail = '';
+
+      this.goals = [];
+      this.completedGoals = [];
+    },
+    async login() {
+      this.loginError = '';
+      this.isLoggingIn = true;
+
+      try {
+        const response = await fetch(`${API_URL}/api/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: this.loginEmail,
+            password: this.loginPassword
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userEmail', this.loginEmail);
+
+        this.isLoggedIn = true;
+        this.currentUserEmail = this.loginEmail;
+
+        await this.fetchGoals();
+
+        this.loginEmail = '';
+        this.loginPassword = '';
+
+        alert('Login successful!');
+
+      } catch (error) {
+        this.loginError = error.message;
+      } finally {
+        this.isLoggingIn = false;
+      }
+    },
+
+    async register() {
+  this.registerError = '';
+  this.isRegistering = true;
+
+  try {
+    const response = await fetch(`${API_URL}/api/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: this.registerEmail,
+        password: this.registerPassword
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message);
+    }
+
+    alert('Account created successfully!');
+
+    this.registerEmail = '';
+    this.registerPassword = '';
+
+  } catch (error) {
+    this.registerError = error.message;
+  } finally {
+    this.isRegistering = false;
+  }
+},
+
     async fetchGoals() {
   try {
-    const response = await fetch('http://localhost:3000/api/goals');
+    const response = await fetch(`${API_URL}/api/goals`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+  if (response.status === 401 || response.status === 403) {
+      this.logout();
+      return;
+    }
 
     if (!response.ok) {
       throw new Error('Failed to fetch goals');
@@ -110,10 +222,12 @@ const app = Vue.createApp({
 
     try {
       for (const goal of selectedGoals) {
-        const response = await fetch(
-          `http://localhost:3000/api/goals/${goal.id}`,
+        const response = await fetch(`${API_URL}/api/goals/${goal.id}`, 
           {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
           }
         );
 
@@ -175,11 +289,12 @@ async saveGoal(goal) {
 
   try {
     const response = await fetch(
-      `http://localhost:3000/api/goals/${goal.id}`,
+      `${API_URL}/api/goals/${goal.id}`,
       {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
+       headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           title: goal.title,
@@ -254,11 +369,12 @@ async addGoal() {
   this.isAddingGoal = true;
   try {
     const response = await fetch(
-      'http://localhost:3000/api/goals',
+      `${API_URL}/api/goals`,
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+         'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           title: this.enteredGoalValue,
@@ -314,11 +430,12 @@ async removeGoal(goal) {
     const completedDate = new Date().toISOString().split('T')[0];
 
     const response = await fetch(
-      `http://localhost:3000/api/goals/${goal.id}`,
+      `${API_URL}/api/goals/${goal.id}`,
       {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
+       headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           title: goal.title,
