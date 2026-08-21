@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Goals Web</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    
+  <section id="user-goals">
+    <header>
+      <button class="theme-button" @click="toggleDarkMode">
+      {{ darkMode ? '☀️ Light Mode' : '🌙 Dark Mode' }}
+    </button>
+        <h1>My Personal Goals</h1>
+
+        <button @click="currentSection = 'goals'">
+          My Goals
+        </button>
+
+        <button @click="currentSection = 'completed'">
+          Completed
+        </button>
+
+        <button @click="currentSection = 'overdue'">
+          ⚠ Overdue
+        </button>
+      </header>
+<div v-if="currentSection==='goals'">
+  <!-- GOAL STATISTICS -->
+  <div class="stats-container">
+
+      <div class="stat-card">
+        <span>🎯</span>
+        <strong>{{ totalGoals }}</strong>
+        <p>Total Goals</p>
+      </div>
+
+      <div class="stat-card">
+        <span>📌</span>
+        <strong>{{ activeCount }}</strong>
+        <p>Active</p>
+      </div>
+
+      <div class="stat-card">
+        <span>✅</span>
+        <strong>{{ completedCount }}</strong>
+        <p>Completed</p>
+      </div>
+
+      <div class="stat-card">
+        <span>⚠️</span>
+        <strong>{{ overdueCount }}</strong>
+        <p>Overdue</p>
+      </div>
+
+    </div>
+    <div class="goal-form">
+      <div class="form-field">
+        <label for="goal-name">Goal name</label>
+        <input 
+          id="goal-name"
+          type="text" 
+          v-model="enteredGoalValue" 
+          placeholder="Enter your goal"
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="goal-duration">Duration</label>
+        <input
+          id="goal-duration"
+          type="number"
+          v-model="enteredDuration"
+          placeholder="Number of days"
+          min="1"
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="goal-priority">Priority</label>
+        <select id="goal-priority" v-model="enteredPriority">
+          <option value="high">High Priority</option>
+          <option value="medium">Medium Priority</option>
+          <option value="low">Low Priority</option>
+        </select>
+      </div>
+    </div>
+      <p v-if="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </p>
+      <br></br>
+      <button @click="addGoal" :disabled="isAddingGoal">
+        {{ isAddingGoal ? 'Adding...' : 'Add Goal' }}
+      </button>
+      <div v-if="goals.length === 0" class="empty-state">
+        <div class="empty-icon">🎯</div>
+        <h3>No goals yet!</h3>
+        <p>Start adding your first goal and begin working towards it.</p>
+      </div>
+     <br></br>
+      <div>
+        <button :style="{backgroundColor: selectedPriority ==='all' ? '#b80055' : 'pink' }" @click="selectedPriority = 'all'">All</button>
+        <button :style="{ backgroundColor: selectedPriority === 'high' ? 'red' : 'pink' }" @click="selectedPriority = 'high'">High</button>
+        <button :style="{ backgroundColor: selectedPriority === 'medium' ? 'orange' : 'pink' }" @click="selectedPriority = 'medium'">Medium</button>
+        <button :style="{ backgroundColor: selectedPriority === 'low' ? 'green' : 'pink' }" @click="selectedPriority = 'low'">Low</button>
+      </div>
+     
+      <ul>
+        <li 
+          v-for="goal in filteredGoals" 
+          :key="goal.id" 
+          :class="goal.priority"
+        >
+         <!-- NORMAL VIEW -->
+      <div v-if="editingIndex !== goal.id">
+        <p style="font-size:  clamp(18px, 5vw, 24px); font-weight: bold; color: rgb(236, 9, 115); text-transform: uppercase;">{{ goal.title }}</p>
+        <p>Duration: {{ goal.duration }} days</p>
+        <p>Finish by: {{ formatDate(goal.finishDate) }}</p>
+        <p  v-if="isOverdue(goal)"
+          style="color: red; font-weight: bold;"
+        >
+          ⚠ Overdue
+        </p>
+        <button class="edit-button" @click="editGoal(goal)">Edit</button>
+        <button
+        class="finished-button"
+          @click="confirmFinish(goal)"
+          :disabled="isCompletingGoal"
+        >
+          {{ isCompletingGoal ? 'Completing...' : 'Finished!' }}
+        </button>
+        </div>
+      <!-- EDIT VIEW -->
+      <div v-else>
+
+        <label>Goal name</label>
+        <input 
+          type="text"
+          v-model="goal.title"
+        >
+<br></br>
+        <label>Duration</label>
+        <input
+          type="number"
+          v-model="goal.duration"
+          min="1"
+        >
+<br></br>
+        <label>Priority</label>
+        <select v-model="goal.priority">
+          <option value="high">High Priority</option>
+          <option value="medium">Medium Priority</option>
+          <option value="low">Low Priority</option>
+        </select>
+<br></br>
+        <p v-if="editErrorMessage" class="error-message">
+          {{ editErrorMessage }}
+        </p>
+      <button
+        class="save-button"
+        @click="saveGoal(goal)"
+        :disabled="isSavingGoal"
+      >
+        {{ isSavingGoal ? 'Saving...' : 'Save' }}
+      </button>
+
+        <button class="cancel-button" @click="cancelEdit">Cancel</button>
+
+      </div>
+      </li>
+       </ul>
+      </div>
+     <div v-if="currentSection==='overdue'">
+        <h2>Overdue Goals</h2>
+
+        <div
+        v-if="goals.filter(goal => isOverdue(goal)).length === 0"
+        class="empty-state"
+      >
+        <h3>You're all caught up!</h3>
+        <p>You don't have any overdue goals.</p>
+      </div>
+
+        <ul v-else>
+          <li
+            v-for="goal in goals.filter(goal => isOverdue(goal))"
+            :key="goal.id"
+            :class="goal.priority"
+          >
+            <p style="font-size:  clamp(18px, 5vw, 24px); font-weight: bold; color: red; text-transform: uppercase;">
+              ⚠ {{ goal.title }}
+            </p>
+
+            <p>Duration: {{ goal.duration }} days</p>
+            <p>Finish by: {{ formatDate(goal.finishDate) }}</p>
+
+            <button class="edit-button" @click="editGoal(goal)">
+              Edit
+            </button>
+
+            <button class="finished-button" @click="confirmFinish(goal)">
+              Finished!
+            </button>
+          </li>
+        </ul>
+      </div>
+     <div v-if="currentSection==='completed'">
+      <h2>Completed Goals</h2>
+      <button
+        @click="deleteSelectedGoals"
+        :disabled="isDeletingGoals"
+      >
+        {{ isDeletingGoals ? 'Deleting...' : 'Delete Selected' }}
+      </button>
+      
+      <div v-if="completedGoals.length === 0" class="empty-state">
+        <h3>No completed goals yet</h3>
+        <p>Finish a goal and it will appear here.</p>
+      </div>
+
+      <ul v-else>
+        <li 
+          v-for="(goal, index) in completedGoals"
+          :key="index"
+          class="completed-goal"
+        >
+         <input 
+          type="checkbox"
+          v-model="goal.selected"
+        >
+
+          <p style="font-size:  clamp(18px, 5vw, 24px); font-weight: bold; display: inline; margin-right: 20px; text-transform: uppercase;">
+            ✓ {{ goal.title }}
+          </p>
+
+          <p style="display: inline; margin-right: 20px;">
+            Duration: {{ goal.duration }} days
+          </p>
+
+          <p style="display: inline; margin-right: 20px;">
+            Completed on: {{ goal.completedDate }}
+          </p>
+        </li>
+      </ul>
+    </div>
+  </section>
+  </body>
+</html>
