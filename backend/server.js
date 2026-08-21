@@ -1,6 +1,31 @@
 const express = require('express');
 const pool = require('./db');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({
+      message: 'Authentication required'
+    });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (error, user) => {
+    if (error) {
+      return res.status(403).json({
+        message: 'Invalid or expired token'
+      });
+    }
+
+    req.user = user;
+    next();
+  });
+};
 
 const app = express();
 app.use(cors());
@@ -12,10 +37,13 @@ app.use(express.json());
 
 
 // GET all goals
-app.get('/api/goals', async (req, res) => {
+app.get('/api/goals', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM goals ORDER BY created_at DESC'
+    `SELECT * FROM goals
+    WHERE user_id = $1
+    ORDER BY created_at DESC`,
+    [req.user.userId]
     );
 
     res.json(result.rows);
@@ -29,7 +57,7 @@ app.get('/api/goals', async (req, res) => {
 });
 
 // POST a new goal
-app.post('/api/goals', async (req, res) => {
+app.post('/api/goals', authenticateToken, async (req, res) => {
   try {
     const {
       title,
@@ -63,10 +91,10 @@ app.post('/api/goals', async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO goals
-       (title, duration, finish_date, priority)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [title, duration, finishDate, priority]
+    (title, duration, finish_date, priority, user_id)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *`,
+    [title, duration, finishDate, priority, req.user.userId]
     );
 
     res.status(201).json(result.rows[0]);
@@ -79,8 +107,7 @@ app.post('/api/goals', async (req, res) => {
   }
 });
 
-app.put('/api/goals/:id', async (req, res) => {
-  try {
+app.put('/api/goals/:id', authenticateToken, async (req, res) => {  try {
     const goalId = Number(req.params.id);
 
     const {
@@ -124,7 +151,7 @@ if (!validPriorities.includes(priority)) {
            priority = $4,
            completed = $5,
            completed_date = $6
-       WHERE id = $7
+       WHERE id = $7 AND user_id = $8
        RETURNING *`,
       [
         title,
@@ -133,7 +160,8 @@ if (!validPriorities.includes(priority)) {
         priority,
         completed,
         completedDate,
-        goalId
+        goalId,
+        req.user.userId
       ]
     );
 
@@ -154,8 +182,7 @@ if (!validPriorities.includes(priority)) {
   }
 });
 
-app.delete('/api/goals/:id', async (req, res) => {
-  try {
+app.delete('/api/goals/:id', authenticateToken, async (req, res) => {  try {
     const goalId = Number(req.params.id);
 
     if (!Number.isInteger(goalId) || goalId <= 0) {
@@ -166,9 +193,9 @@ app.delete('/api/goals/:id', async (req, res) => {
 
     const result = await pool.query(
       `DELETE FROM goals
-       WHERE id = $1
+        WHERE id = $1 AND user_id = $2
        RETURNING *`,
-      [goalId]
+        [goalId, req.user.userId]
     );
 
     if (result.rows.length === 0) {
@@ -204,6 +231,121 @@ app.get('/api/test-db', async (req, res) => {
 
     res.status(500).json({
       message: 'Database connection failed'
+    });
+  }
+});
+
+app.post('/api/register', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || email.trim() === '') {
+      return res.status(400).json({
+        message: 'Email is required'
+      });
+    }
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        message: 'Password must be at least 6 characters'
+      });
+    }
+
+    const existingUser = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({
+        message: 'An account with this email already exists'
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      `INSERT INTO users (email, password)
+       VALUES ($1, $2)
+       RETURNING id, email, created_at`,
+      [email, hashedPassword]
+    );
+
+    res.status(201).json({
+      message: 'Account created successfully',
+      user: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: 'Failed to create account'
+    });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || email.trim() === '') {
+      return res.status(400).json({
+        message: 'Email is required'
+      });
+    }
+
+    if (!password) {
+      return res.status(400).json({
+        message: 'Password is required'
+      });
+    }
+
+    const result = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        message: 'Invalid email or password'
+      });
+    }
+
+    const user = result.rows[0];
+
+    const passwordMatches = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!passwordMatches) {
+      return res.status(401).json({
+        message: 'Invalid email or password'
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: '1h'
+      }
+    );
+
+    res.json({
+      message: 'Login successful',
+      token
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: 'Failed to login'
     });
   }
 });
