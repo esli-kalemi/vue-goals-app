@@ -15,72 +15,78 @@
   <body>
     
   <section id="user-goals">
-    <div  v-if="!isLoggedIn" class="register-form">
-      <h2>Create an account</h2>
+    <div v-if="!isLoggedIn" class="auth-container">
 
-      <form @submit.prevent="register">
-        <div>
-          <label for="register-email">Email</label>
-          <input
-            id="register-email"
-            type="email"
-            v-model="registerEmail"
-            placeholder="Enter your email"
-          />
-        </div>
+  <div class="register-form">
+    <h2>Create an account</h2>
 
-        <div>
-          <label for="register-password">Password</label>
-          <input
-            id="register-password"
-            type="password"
-            v-model="registerPassword"
-            placeholder="Enter your password"
-          />
-        </div>
+    <form @submit.prevent="register">
+      <div>
+        <label for="register-email">Email</label>
+        <input
+          id="register-email"
+          type="email"
+          v-model="registerEmail"
+          placeholder="Enter your email"
+        />
+      </div>
 
-        <p v-if="registerError" class="error-message">
-          {{ registerError }}
-        </p>
+      <div>
+        <label for="register-password">Password</label>
+        <input
+          id="register-password"
+          type="password"
+          v-model="registerPassword"
+          placeholder="Enter your password"
+        />
+      </div>
 
-        <button type="submit" :disabled="isRegistering">
-          {{ isRegistering ? 'Registering...' : 'Register' }}
-        </button>
-      </form>
-    </div>
-    <div  v-if="!isLoggedIn" class="login-form">
-      <h2>Login</h2>
+      <p v-if="registerError" class="error-message">
+        {{ registerError }}
+      </p>
 
-      <form @submit.prevent="login">
-        <div>
-          <label for="login-email">Email</label>
-          <input
-            id="login-email"
-            type="email"
-            v-model="loginEmail"
-            placeholder="Enter your email"
-          />
-        </div>
+      <button type="submit" :disabled="isRegistering">
+        {{ isRegistering ? 'Registering...' : 'Register' }}
+      </button>
+    </form>
+  </div>
 
-        <div>
-          <label for="login-password">Password</label>
-          <input
-            id="login-password"
-            type="password"
-            v-model="loginPassword"
-            placeholder="Enter your password"
-          />
-        </div>
 
-        <p v-if="loginError" class="error-message">
-          {{ loginError }}
-        </p>
+  <div class="login-form">
+    <h2>Login</h2>
 
-        <button type="submit" :disabled="isLoggingIn">
-          {{ isLoggingIn ? 'Logging in...' : 'Login' }}
-        </button>
-      </form>
-    </div>
+    <form @submit.prevent="login">
+      <div>
+        <label for="login-email">Email</label>
+        <input
+          id="login-email"
+          type="email"
+          v-model="loginEmail"
+          placeholder="Enter your email"
+        />
+      </div>
+
+      <div>
+        <label for="login-password">Password</label>
+        <input
+          id="login-password"
+          type="password"
+          v-model="loginPassword"
+          placeholder="Enter your password"
+        />
+      </div>
+
+      <p v-if="loginError" class="error-message">
+        {{ loginError }}
+      </p>
+
+      <button type="submit" :disabled="isLoggingIn">
+        {{ isLoggingIn ? 'Logging in...' : 'Login' }}
+      </button>
+    </form>
+  </div>
+
+</div>
     <div v-if="isLoggedIn">
     <header>
       <div class="user-account">
@@ -196,8 +202,17 @@
          <!-- NORMAL VIEW -->
       <div v-if="editingIndex !== goal.id">
         <p style="font-size:  clamp(18px, 5vw, 24px); font-weight: bold; color: rgb(236, 9, 115); text-transform: uppercase;">{{ goal.title }}</p>
-        <p>Duration: {{ goal.duration }} days</p>
-        <p>Finish by: {{ formatDate(goal.finishDate) }}</p>
+        <p>
+          Duration:
+          {{ goal.duration ? goal.duration + ' days' : 'Unknown' }}
+        </p>
+       <p>
+          Finish by:
+          {{ goal.finishDate
+            ? new Date(goal.finishDate).toLocaleDateString()
+            : '—'
+          }}
+        </p>
         <p  v-if="isOverdue(goal)"
           style="color: red; font-weight: bold;"
         >
@@ -274,7 +289,13 @@
             </p>
 
             <p>Duration: {{ goal.duration }} days</p>
-            <p>Finish by: {{ formatDate(goal.finishDate) }}</p>
+            <p>
+              Finish by:
+              {{ goal.finishDate
+                ? new Date(goal.finishDate).toLocaleDateString()
+                : '—'
+              }}
+            </p>
 
             <button class="edit-button" @click="editGoal(goal)">
               Edit
@@ -316,7 +337,8 @@
           </p>
 
           <p style="display: inline; margin-right: 20px;">
-            Duration: {{ goal.duration }} days
+            Duration:
+             {{ goal.duration ? goal.duration + ' days' : 'Unknown' }}
           </p>
 
           <p style="display: inline; margin-right: 20px;">

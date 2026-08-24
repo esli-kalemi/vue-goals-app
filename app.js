@@ -264,8 +264,11 @@ async saveGoal(goal) {
     return;
   }
 
+  // Allow Unknown duration (null or empty)
   if (
     goal.duration !== '' &&
+    goal.duration !== null &&
+    goal.duration !== undefined &&
     Number(goal.duration) < 1
   ) {
     this.editErrorMessage = 'Duration must be at least 1 day.';
@@ -274,7 +277,12 @@ async saveGoal(goal) {
 
   let finishDate = null;
 
-  if (goal.duration !== '') {
+  // Only calculate a finish date if a duration was entered
+  if (
+    goal.duration !== '' &&
+    goal.duration !== null &&
+    goal.duration !== undefined
+  ) {
     const today = new Date();
 
     today.setDate(
@@ -285,6 +293,7 @@ async saveGoal(goal) {
 
     goal.duration = Number(goal.duration);
   }
+
   this.isSavingGoal = true;
 
   try {
@@ -292,14 +301,16 @@ async saveGoal(goal) {
       `${API_URL}/api/goals/${goal.id}`,
       {
         method: 'PUT',
-       headers: {
+        headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           title: goal.title,
           duration:
-            goal.duration === ''
+            goal.duration === '' ||
+            goal.duration === null ||
+            goal.duration === undefined
               ? null
               : Number(goal.duration),
           finishDate: finishDate,
@@ -327,10 +338,11 @@ async saveGoal(goal) {
     this.editingIndex = null;
 
   } catch (error) {
-    
     console.error(error);
+
     this.editErrorMessage =
       'Could not save your changes. Please try again.';
+
     this.isSavingGoal = false;
   }
 },
@@ -356,7 +368,7 @@ async addGoal() {
   }
 
   let finishDate = null;
-
+  
   if (this.enteredDuration !== '') {
     const today = new Date();
 
@@ -477,7 +489,7 @@ async removeGoal(goal) {
   }
 },
     isOverdue(goal) {
-      if (goal.finishDate === 'Unknown') {
+      if (!goal.finishDate) {
         return false;
       }
 
