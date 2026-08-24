@@ -96,20 +96,6 @@ User-specific database queries
 
 Users can only access and manage their own goals.
 
-## Project Structure
-
-My-Personal-Goals/
-│
-├── frontend/
-│   ├── index.html
-│   ├── app.js
-│   └── styles.css
-│
-└── backend/
-    ├── server.js
-    ├── db.js
-    └── package.json
-
 ## Current version
 
 The application is currently running as a full-stack local web application with:
