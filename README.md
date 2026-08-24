@@ -4,6 +4,25 @@ A full-stack goal-tracking web application that allows users to create, manage, 
 
 The application provides user authentication, personalized goal management, goal priorities, deadlines, completion tracking, and progress statistics through a responsive and user-friendly interface.
 
+## Screenshots
+
+### Login & Registration
+
+![Login and Registration](screenshots/login.jpeg)
+
+### Goals Dashboard
+
+![Goals Dashboard](screenshots/dashboard.jpeg)
+
+### Mobile Design
+
+![Mobile Design](screenshots/mobile.jpeg)
+
+## Completed section
+![Completed section](screenshots/complete.jpeg)
+
+## Edit section
+![Edit section](screenshots/edit.jpeg)
 ## Features
 
 User Authentication
