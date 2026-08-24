@@ -130,3 +130,6 @@ Additional personalization options
 ## Author
 
 Developed as a personal full-stack web development project.
+
+## Screenshots:
+
