@@ -29,7 +29,7 @@ const authenticateToken = (req, res, next) => {
 
 const app = express();
 app.use(cors({
-  origin: 'https://your-goal-tracker.onrender.com'
+  origin: 'https://goal-tracker-vcyu.onrender.com'
 }));
 
 const PORT = process.env.PORT || 3000;
