@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../../Downloads/lists-cond-01-starting-setup"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../Intern"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "VUE"
+	}
+}

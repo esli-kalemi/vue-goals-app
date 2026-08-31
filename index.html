@@ -227,7 +227,10 @@
           {{ isCompletingGoal ? 'Completing...' : 'Finished!' }}
         </button>
         </div>
+        
+
       <!-- EDIT VIEW -->
+       
       <div v-else>
 
         <label>Goal name</label>
@@ -347,6 +350,45 @@
         </li>
       </ul>
     </div>
+    <!-- FINISH GOAL MODAL -->
+        <div v-if="showFinishModal" class="modal">
+          <div class="modal-content">
+            <h2>Finish Goal?</h2>
+
+            <p>
+              Are you sure you finished
+              "{{ goalToFinish?.title }}"?
+            </p>
+
+            <button @click="cancelFinish">Cancel</button>
+            <button @click="finishGoal">Yes, I'm finished!</button>
+          </div>
+        </div>
+        <!-- DELETE SELECTED GOALS MODAL -->
+        <div v-if="showDeleteModal" class="modal">
+          <div class="modal-content">
+            <h2>Delete Goals?</h2>
+
+            <p>
+              Are you sure you want to delete
+              {{ goalsToDelete.length }} completed goal(s)?
+            </p>
+
+            <button
+              @click="cancelDeleteSelectedGoals"
+              :disabled="isDeletingGoals"
+            >
+              Cancel
+            </button>
+
+            <button
+              @click="confirmDeleteSelectedGoals"
+              :disabled="isDeletingGoals"
+            >
+              {{ isDeletingGoals ? 'Deleting...' : 'Yes, Delete' }}
+            </button>
+          </div>
+        </div>
 </div>
   </section>
   </body>

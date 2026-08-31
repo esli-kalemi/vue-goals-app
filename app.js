@@ -31,7 +31,11 @@ const app = Vue.createApp({
       isSavingGoal: false,
       isCompletingGoal: false,
       isDeletingGoals:false,
-      };
+      showFinishModal: false,
+      goalToFinish: null,  
+      showDeleteModal: false,
+      goalsToDelete: [],
+    };
   },
   computed: {
     totalGoals() {
@@ -195,60 +199,74 @@ const app = Vue.createApp({
       document.body.classList.toggle('dark-mode', this.darkMode);
     },
 
-    confirmFinish(goal) {
-      if (confirm(`Are you sure you finished "${goal.title}"?`)) {
-        this.removeGoal(goal);
+   confirmFinish(goal) {
+      this.goalToFinish = goal;
+      this.showFinishModal = true;
+    },
+     finishGoal() {
+      if (this.goalToFinish) {
+        this.removeGoal(this.goalToFinish);
       }
+
+      this.showFinishModal = false;
+      this.goalToFinish = null;
     },
 
-    async deleteSelectedGoals() {
-    const selectedGoals = this.completedGoals.filter(
-      goal => goal.selected
-    );
+    cancelFinish() {
+      this.showFinishModal = false;
+      this.goalToFinish = null;
+    },
+async deleteSelectedGoals() {
+  const selectedGoals = this.completedGoals.filter(
+    goal => goal.selected
+  );
 
-    if (selectedGoals.length === 0) {
-      return;
-    }
+  if (selectedGoals.length === 0) {
+    return;
+  }
 
-    if (
-      !confirm(
-        `Are you sure you want to delete ${selectedGoals.length} completed goal(s)?`
-      )
-    ) {
-      return;
-    }
+  this.goalsToDelete = selectedGoals;
+  this.showDeleteModal = true;
+},
+async confirmDeleteSelectedGoals() {
+  this.isDeletingGoals = true;
 
-    this.isDeletingGoals = true;
-
-    try {
-      for (const goal of selectedGoals) {
-        const response = await fetch(`${API_URL}/api/goals/${goal.id}`, 
-          {
-            method: 'DELETE',
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to delete goal ${goal.id}`
-          );
+  try {
+    for (const goal of this.goalsToDelete) {
+      const response = await fetch(`${API_URL}/api/goals/${goal.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to delete goal ${goal.id}`
+        );
+      }
     }
 
     this.completedGoals = this.completedGoals.filter(
       goal => !goal.selected
     );
+
+    this.showDeleteModal = false;
+    this.goalsToDelete = [];
     this.isDeletingGoals = false;
+
   } catch (error) {
     console.error(error);
 
     this.errorMessage =
       'Could not delete one or more goals. Please try again.';
+
     this.isDeletingGoals = false;
-    }
+  }
+},
+cancelDeleteSelectedGoals() {
+  this.showDeleteModal = false;
+  this.goalsToDelete = [];
 },
 
     cancelEdit() {
