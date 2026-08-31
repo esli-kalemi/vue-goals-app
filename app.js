@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://goal-tracker-api-hxil.onrender.com';
 
 const app = Vue.createApp({
   data() {
