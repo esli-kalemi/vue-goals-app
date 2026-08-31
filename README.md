@@ -4,6 +4,12 @@ A full-stack goal-tracking web application that allows users to create, manage, 
 
 The application provides user authentication, personalized goal management, goal priorities, deadlines, completion tracking, and progress statistics through a responsive and user-friendly interface.
 
+# Live Demo
+
+Try the app: https://goal-tracker-vcyu.onrender.com/
+
+You can create your own account and start adding goals immediately.
+
 ## Screenshots
 
 ### Login & Registration
