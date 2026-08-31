@@ -39,6 +39,13 @@
           v-model="registerPassword"
           placeholder="Enter your password"
         />
+        <div class="password-requirements">
+          <span>8+ characters</span>
+          <span>Uppercase</span>
+          <span>Lowercase</span>
+          <span>Number</span>
+          <span>Special character</span>
+        </div>
       </div>
 
       <p v-if="registerError" class="error-message">
